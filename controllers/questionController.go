@@ -4,9 +4,45 @@ import (
 	"crud-ukom/config"
 	"crud-ukom/models"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
+
+// Create a new question
+func CreateQuestion(c *gin.Context) {
+	var input struct {
+		IDPackage     int64  `json:"id_package" binding:"required"`
+		Question      string `json:"question" binding:"required"`
+		Answer        string `json:"answer"`
+		CorrectAnswer string `json:"correct_answer"`
+		PacketID      int64  `json:"packet_id"`
+	}
+
+	// Bind the JSON input
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	question := models.Question{
+		IDPackage:     input.IDPackage,
+		Question:      input.Question,
+		Answer:        input.Answer,
+		CorrectAnswer: input.CorrectAnswer,
+		PacketID:      input.PacketID,
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
+	}
+
+	// Save the question to the database
+	if err := config.DB.Create(&question).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, question)
+}
 
 // Get all questions
 func GetQuestions(c *gin.Context) {
@@ -15,55 +51,59 @@ func GetQuestions(c *gin.Context) {
 	c.JSON(http.StatusOK, questions)
 }
 
-// Get question by ID
+// Get a question by ID
 func GetQuestionByID(c *gin.Context) {
 	var question models.Question
-	id := c.Param("id")
-	if err := config.DB.First(&question, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Question not found!"})
+	if err := config.DB.Where("id = ?", c.Param("id")).First(&question).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Question not found"})
 		return
 	}
 	c.JSON(http.StatusOK, question)
 }
 
-// Create new question
-func CreateQuestion(c *gin.Context) {
-	var input models.Question
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	config.DB.Create(&input)
-	c.JSON(http.StatusOK, input)
-}
-
-// Update question by ID
+// Update a question by ID
 func UpdateQuestion(c *gin.Context) {
 	var question models.Question
-	id := c.Param("id")
-	if err := config.DB.First(&question, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Question not found!"})
+	if err := config.DB.Where("id = ?", c.Param("id")).First(&question).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Question not found"})
 		return
 	}
 
-	var input models.Question
+	var input struct {
+		IDPackage     int64  `json:"id_package" binding:"required"`
+		Question      string `json:"question" binding:"required"`
+		Answer        string `json:"answer"`
+		CorrectAnswer string `json:"correct_answer"`
+		PacketID      int64  `json:"packet_id"`
+	}
+
+	// Bind the JSON input
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	config.DB.Model(&question).Updates(input)
+	// Update fields
+	question.IDPackage = input.IDPackage
+	question.Question = input.Question
+	question.Answer = input.Answer
+	question.CorrectAnswer = input.CorrectAnswer
+	question.PacketID = input.PacketID
+	question.UpdatedAt = time.Now()
+
+	// Save the updated question to the database
+	config.DB.Save(&question)
 	c.JSON(http.StatusOK, question)
 }
 
-// Delete question by ID
+// Delete a question by ID
 func DeleteQuestion(c *gin.Context) {
 	var question models.Question
-	id := c.Param("id")
-	if err := config.DB.First(&question, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Question not found!"})
+	if err := config.DB.Where("id = ?", c.Param("id")).First(&question).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Question not found"})
 		return
 	}
+
 	config.DB.Delete(&question)
-	c.JSON(http.StatusOK, gin.H{"message": "Question deleted successfully!"})
+	c.JSON(http.StatusOK, gin.H{"message": "Question deleted successfully"})
 }

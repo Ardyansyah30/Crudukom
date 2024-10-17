@@ -7,28 +7,49 @@ import (
 )
 
 func SetupRoutes() *gin.Engine {
-	router := gin.Default()
+	r := gin.Default()
 
-	// User Routes
-	router.POST("/users", controllers.CreateUser)
-	router.GET("/users", controllers.GetUsers)
-	router.GET("/users/:id", controllers.GetUserByID)
-	router.PUT("/users/:id", controllers.UpdateUser)
-	router.DELETE("/users/:id", controllers.DeleteUser)
+	// User routes
+	r.POST("/users", controllers.CreateUser)
+	r.GET("/users", controllers.GetUsers)
+	r.GET("/users/:id", controllers.GetUserByID)
+	r.PUT("/users/:id", controllers.UpdateUser)
+	r.DELETE("/users/:id", controllers.DeleteUser)
 
 	// Question routes
-	router.GET("/questions", controllers.GetQuestions)
-	router.GET("/questions/:id", controllers.GetQuestionByID)
-	router.POST("/questions", controllers.CreateQuestion)
-	router.PUT("/questions/:id", controllers.UpdateQuestion)
-	router.DELETE("/questions/:id", controllers.DeleteQuestion)
+	r.POST("/questions", controllers.CreateQuestion)
+	r.GET("/questions", controllers.GetQuestions)
+	r.GET("/questions/:id", controllers.GetQuestionByID)
+	r.PUT("/questions/:id", controllers.UpdateQuestion)
+	r.DELETE("/questions/:id", controllers.DeleteQuestion)
 
 	// Packet routes
-	router.GET("/packets", controllers.GetPackets)
-	router.GET("/packets/:id", controllers.GetPacketByID)
-	router.POST("/packets", controllers.CreatePacket)
-	router.PUT("/packets/:id", controllers.UpdatePacket)
-	router.DELETE("/packets/:id", controllers.DeletePacket)
+	r.GET("/packets", controllers.GetPackets)
+	r.GET("/packets/:id", controllers.GetPacketByID)
+	r.POST("/packets", controllers.CreatePacket)
+	r.PUT("/packets/:id", controllers.UpdatePacket)
+	r.DELETE("/packets/:id", controllers.DeletePacket)
 
-	return router
+	// Exam Routes
+	r.POST("/exams", controllers.CreateExam)
+	r.GET("/exams", controllers.GetExams)
+	r.GET("/exams/:id", controllers.GetExamByID)
+	r.PUT("/exams/:id", controllers.UpdateExam)
+	r.DELETE("/exams/:id", controllers.DeleteExam)
+
+	// Order Routes
+	r.POST("/orders", controllers.CreateOrder)
+	r.GET("/orders", controllers.GetOrders)
+	r.GET("/orders/:id", controllers.GetOrderByID)
+	r.PUT("/orders/:id", controllers.UpdateOrder)
+	r.DELETE("/orders/:id", controllers.DeleteOrder)
+
+	// Exam_questions Routes
+	r.POST("/exam_questions", controllers.CreateExamQuestion)
+	r.GET("/exam_questions", controllers.GetExamQuestions)
+	r.GET("/exam_questions/:id", controllers.GetExamQuestionByID)
+	r.PUT("/exam_questions/:id", controllers.UpdateExamQuestion)
+	r.DELETE("/exam_questions/:id", controllers.DeleteExamQuestion)
+
+	return r
 }

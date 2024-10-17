@@ -10,7 +10,8 @@ func main() {
 	config.ConnectDB()
 
 	// Auto migrate the User model
-	config.DB.AutoMigrate(&models.User{})
+	config.DB.AutoMigrate(&models.User{}, &models.Question{},
+		&models.Packet{}, &models.Exam{}, &models.Order{}, &models.ExamQuestion{})
 
 	router := routes.SetupRoutes()
 	router.Run(":8080") // Run the server on port 8080
