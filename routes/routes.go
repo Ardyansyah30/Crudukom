@@ -10,11 +10,13 @@ func SetupRoutes() *gin.Engine {
 	r := gin.Default()
 
 	// User routes
-	r.POST("/users", controllers.CreateUser)
+	// r.POST("/users", controllers.CreateUser)
 	r.GET("/users", controllers.GetUsers)
 	r.GET("/users/:id", controllers.GetUserByID)
 	r.PUT("/users/:id", controllers.UpdateUser)
 	r.DELETE("/users/:id", controllers.DeleteUser)
+	r.POST("/signup", controllers.Signup) // Route untuk signup
+	r.POST("/login", controllers.Login)   // Route untuk login
 
 	// Question routes
 	r.POST("/questions", controllers.CreateQuestion)
