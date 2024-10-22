@@ -15,13 +15,11 @@ func CreateOrder(c *gin.Context) {
 		IDUser        int     `json:"id_user" binding:"required"`
 		IDPacket      int     `json:"id_packet" binding:"required"`
 		PaymentStatus string  `json:"payment_status" binding:"required"`
-		OrderDate     string  `json:"order_date" binding:"required"` // Expecting date as string
+		OrderDate     string  `json:"order_date" binding:"required"`
 		TotalPrice    float64 `json:"total_price" binding:"required"`
 	}
 
-	// Bind the JSON input
 	if err := c.ShouldBindJSON(&input); err != nil {
-		// Respond with error if validation fails
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -43,11 +41,7 @@ func CreateOrder(c *gin.Context) {
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
 	}
-
-	// Save to database
 	config.DB.Create(&order)
-
-	// Respond with the created order
 	c.JSON(http.StatusOK, order)
 }
 
@@ -96,7 +90,6 @@ func UpdateOrder(c *gin.Context) {
 		return
 	}
 
-	// Update fields
 	order.IDUser = input.IDUser
 	order.IDPacket = input.IDPacket
 	order.PaymentStatus = input.PaymentStatus

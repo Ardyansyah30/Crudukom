@@ -17,7 +17,7 @@ var jwtSecret = []byte(os.Getenv("JWT_SECRET")) // Mendapatkan JWT secret dari e
 
 // Fungsi untuk memvalidasi apakah nomor telepon hanya berisi angka
 func isValidPhoneNumber(phone string) bool {
-	regex := regexp.MustCompile(`^[0-9]+$`)
+	regex := regexp.MustCompile(`^\+?[0-9]+$`)
 	return regex.MatchString(phone)
 }
 
@@ -47,10 +47,10 @@ func generateToken(userID uint) (string, error) {
 // Signup user baru
 func Signup(c *gin.Context) {
 	var input struct {
-		Name        string `json:"Name"`
-		Email       string `json:"Email"`
-		Password    string `json:"Password"`
-		PhoneNumber string `json:"PhoneNumber"`
+		Name        string `json:"name"`
+		Email       string `json:"email"`
+		Password    string `json:"password"`
+		PhoneNumber string `json:"phone_number"`
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -97,13 +97,11 @@ func Signup(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 
-// Fungsi Login, GetUsers, GetUserByID, UpdateUser, DeleteUser...
-
 // Login user
 func Login(c *gin.Context) {
 	var input struct {
-		Email    string `json:"Email"`
-		Password string `json:"Password"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -162,17 +160,17 @@ func UpdateUser(c *gin.Context) {
 	}
 
 	var input struct {
-		Name                   string `json:"Name"`
-		Email                  string `json:"Email"`
-		Password               string `json:"Password"`
-		DateOfBirth            string `json:"DateOfBirth"`
-		Gender                 string `json:"Gender"`
-		PhoneNumber            string `json:"PhoneNumber"`
-		EducationalInstitution string `json:"EducationalInstitution"`
-		Profession             string `json:"Profession"`
-		Address                string `json:"Address"`
-		Province               string `json:"Province"`
-		City                   string `json:"City"`
+		Name                   string `json:"name"`
+		Email                  string `json:"email"`
+		Password               string `json:"password"`
+		DateOfBirth            string `json:"date_of_birth"`
+		Gender                 string `json:"gender"`
+		PhoneNumber            string `json:"phone_number"`
+		EducationalInstitution string `json:"educational_institution"`
+		Profession             string `json:"profession"`
+		Address                string `json:"address"`
+		Province               string `json:"province"`
+		City                   string `json:"city"`
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -186,7 +184,7 @@ func UpdateUser(c *gin.Context) {
 		return
 	}
 
-	// Parse the date from string to time.Time
+	// Parse the date from string to time.Time without time zone
 	dob, err := time.Parse("2006-01-02", input.DateOfBirth)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid date format. Use YYYY-MM-DD."})
@@ -196,8 +194,15 @@ func UpdateUser(c *gin.Context) {
 	// Update fields
 	user.Name = input.Name
 	user.Email = input.Email
-	user.Password = input.Password
-	user.DateOfBirth = dob // Menggunakan dob yang bertipe time.Time
+	if input.Password != "" { // Update password only if provided
+		hashedPassword, err := hashPassword(input.Password)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+			return
+		}
+		user.Password = hashedPassword
+	}
+	user.DateOfBirth = dob
 	user.Gender = input.Gender
 	user.PhoneNumber = input.PhoneNumber
 	user.EducationalInstitution = input.EducationalInstitution
@@ -207,7 +212,6 @@ func UpdateUser(c *gin.Context) {
 	user.City = input.City
 	user.UpdatedAt = time.Now()
 
-	// Save the updated user to the database
 	if err := config.DB.Save(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

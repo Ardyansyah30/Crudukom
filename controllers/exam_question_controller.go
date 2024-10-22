@@ -16,8 +16,6 @@ func CreateExamQuestion(c *gin.Context) {
 		IDQuestion int `json:"id_question" binding:"required"`
 		UserAnswer int `json:"user_answer" binding:"required"`
 	}
-
-	// Bind the JSON input
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -30,8 +28,6 @@ func CreateExamQuestion(c *gin.Context) {
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 	}
-
-	// Save the exam question to the database
 	if err := config.DB.Create(&examQuestion).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -81,7 +77,6 @@ func UpdateExamQuestion(c *gin.Context) {
 	examQuestion.UserAnswer = input.UserAnswer
 	examQuestion.UpdatedAt = time.Now()
 
-	// Save the updated exam question
 	config.DB.Save(&examQuestion)
 	c.JSON(http.StatusOK, examQuestion)
 }

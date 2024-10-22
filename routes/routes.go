@@ -10,20 +10,23 @@ func SetupRoutes() *gin.Engine {
 	r := gin.Default()
 
 	// User routes
-	// r.POST("/users", controllers.CreateUser)
 	r.GET("/users", controllers.GetUsers)
 	r.GET("/users/:id", controllers.GetUserByID)
 	r.PUT("/users/:id", controllers.UpdateUser)
 	r.DELETE("/users/:id", controllers.DeleteUser)
-	r.POST("/signup", controllers.Signup) // Route untuk signup
-	r.POST("/login", controllers.Login)   // Route untuk login
+	r.POST("/signup", controllers.Signup)
+	r.POST("/login", controllers.Login)
 
 	// Question routes
-	r.POST("/questions", controllers.CreateQuestion)
-	r.GET("/questions", controllers.GetQuestions)
-	r.GET("/questions/:id", controllers.GetQuestionByID)
-	r.PUT("/questions/:id", controllers.UpdateQuestion)
-	r.DELETE("/questions/:id", controllers.DeleteQuestion)
+	r.POST("/", controllers.CreateQuestion)
+	r.GET("/", controllers.GetQuestions)
+	r.GET("/:id", controllers.GetQuestionByID)
+	r.PUT("/:id", controllers.UpdateQuestion)
+	r.DELETE("/:id", controllers.DeleteQuestion)
+	r.GET("/package/:id_package", controllers.GetQuestionsByPackageID)
+
+	// Scoring route
+	r.POST("/score", controllers.CalculateScore) // Calculate user score
 
 	// Packet routes
 	r.GET("/packets", controllers.GetPackets)

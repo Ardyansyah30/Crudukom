@@ -8,14 +8,14 @@ import (
 )
 
 type Packet struct {
-	ID           uint      `gorm:"primaryKey"`         // Primary key for the packet
-	NamePacket   string    `gorm:"type:varchar(255)"`  // Name of the packet
-	Description  string    `gorm:"type:text"`          // Description of the packet
-	Price        float64   `gorm:"type:decimal(10,2)"` // Price of the packet with precision (e.g., 10.2 for monetary values)
-	DurationExam int       `gorm:"type:integer"`       // Duration of the exam associated with the packet
-	Payment      string    `gorm:"type:varchar(255)"`  // Payment method or status
-	CreatedAt    time.Time `gorm:"autoCreateTime"`     // Automatically set the creation time
-	UpdatedAt    time.Time `gorm:"autoUpdateTime"`     // Automatically set the update time
+	ID           uint    `gorm:"primaryKey"`         // Primary key for the packet
+	NamePacket   string  `gorm:"type:varchar(255)"`  // Name of the packet
+	Description  string  `gorm:"type:text"`          // Description of the packet
+	Price        float64 `gorm:"type:decimal(10,2)"` // Price of the packet with precision (e.g., 10.2 for monetary values)
+	DurationExam int     `gorm:"type:integer"`       // Duration of the exam associated with the packet
+	// Payment      string    `gorm:"type:varchar(255)"`  // Payment method or status
+	CreatedAt time.Time `gorm:"autoCreateTime"` // Automatically set the creation time
+	UpdatedAt time.Time `gorm:"autoUpdateTime"` // Automatically set the update time
 }
 
 // Custom UnmarshalJSON for the Price field to handle string or number input
@@ -27,9 +27,9 @@ func (p *Packet) UnmarshalJSON(data []byte) error {
 		Description  string      `json:"description"`
 		Price        interface{} `json:"price"` // Accept interface{} so we can handle both string and number
 		DurationExam int         `json:"duration_exam"`
-		Payment      string      `json:"payment"`
-		CreatedAt    time.Time   `json:"created_at"`
-		UpdatedAt    time.Time   `json:"updated_at"`
+		// Payment      string      `json:"payment"`
+		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `json:"updated_at"`
 	}
 
 	// Unmarshal the incoming JSON into the temporary struct
@@ -42,7 +42,7 @@ func (p *Packet) UnmarshalJSON(data []byte) error {
 	p.NamePacket = tmp.NamePacket
 	p.Description = tmp.Description
 	p.DurationExam = tmp.DurationExam
-	p.Payment = tmp.Payment
+	// p.Payment = tmp.Payment
 	p.CreatedAt = tmp.CreatedAt
 	p.UpdatedAt = tmp.UpdatedAt
 

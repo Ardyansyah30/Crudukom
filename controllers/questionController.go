@@ -4,6 +4,7 @@ import (
 	"crud-ukom/config"
 	"crud-ukom/models"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -19,10 +20,15 @@ func CreateQuestion(c *gin.Context) {
 		PacketID      int64  `json:"packet_id"`
 	}
 
-	// Bind the JSON input
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
+	}
+
+	// Check if the answer is correct
+	isCorrect := 0
+	if input.Answer == input.CorrectAnswer {
+		isCorrect = 1
 	}
 
 	question := models.Question{
@@ -31,11 +37,11 @@ func CreateQuestion(c *gin.Context) {
 		Answer:        input.Answer,
 		CorrectAnswer: input.CorrectAnswer,
 		PacketID:      input.PacketID,
+		IsCorrect:     isCorrect,
 		CreatedAt:     time.Now(),
 		UpdatedAt:     time.Now(),
 	}
 
-	// Save the question to the database
 	if err := config.DB.Create(&question).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -48,6 +54,29 @@ func CreateQuestion(c *gin.Context) {
 func GetQuestions(c *gin.Context) {
 	var questions []models.Question
 	config.DB.Find(&questions)
+	c.JSON(http.StatusOK, questions)
+}
+
+// Get questions by package ID
+func GetQuestionsByPackageID(c *gin.Context) {
+	packageIDStr := c.Param("id_package")
+	packageID, err := strconv.ParseInt(packageIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid package ID"})
+		return
+	}
+
+	var questions []models.Question
+	if err := config.DB.Where("id_package = ?", packageID).Find(&questions).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if len(questions) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "No questions found for the given package ID"})
+		return
+	}
+
 	c.JSON(http.StatusOK, questions)
 }
 
@@ -77,10 +106,15 @@ func UpdateQuestion(c *gin.Context) {
 		PacketID      int64  `json:"packet_id"`
 	}
 
-	// Bind the JSON input
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
+	}
+
+	// Check if the answer is correct
+	isCorrect := 0
+	if input.Answer == input.CorrectAnswer {
+		isCorrect = 1
 	}
 
 	// Update fields
@@ -89,9 +123,9 @@ func UpdateQuestion(c *gin.Context) {
 	question.Answer = input.Answer
 	question.CorrectAnswer = input.CorrectAnswer
 	question.PacketID = input.PacketID
+	question.IsCorrect = isCorrect
 	question.UpdatedAt = time.Now()
 
-	// Save the updated question to the database
 	config.DB.Save(&question)
 	c.JSON(http.StatusOK, question)
 }
@@ -106,4 +140,42 @@ func DeleteQuestion(c *gin.Context) {
 
 	config.DB.Delete(&question)
 	c.JSON(http.StatusOK, gin.H{"message": "Question deleted successfully"})
+}
+
+// CalculateScore calculates the score based on user answers
+func CalculateScore(c *gin.Context) {
+	var input struct {
+		Answers []struct {
+			QuestionID int64  `json:"question_id" binding:"required"`
+			Answer     string `json:"answer" binding:"required"`
+		} `json:"answers" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	correctAnswers := 0
+	incorrectAnswers := 0
+	totalQuestions := len(input.Answers)
+
+	for _, userAnswer := range input.Answers {
+		var question models.Question
+		if err := config.DB.Where("id = ?", userAnswer.QuestionID).First(&question).Error; err == nil {
+			if question.CorrectAnswer == userAnswer.Answer {
+				correctAnswers++
+			} else {
+				incorrectAnswers++
+			}
+		}
+	}
+
+	scoreResult := models.ScoreResult{
+		TotalQuestions:   totalQuestions,
+		CorrectAnswers:   correctAnswers,
+		IncorrectAnswers: incorrectAnswers,
+	}
+
+	c.JSON(http.StatusOK, scoreResult)
 }
