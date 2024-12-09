@@ -4,18 +4,14 @@ import (
 	"crud-ukom/config"
 	"crud-ukom/models"
 	"net/http"
-	"os"
 	"regexp"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
 )
 
-var jwtSecret = []byte(os.Getenv("JWT_SECRET")) // Mendapatkan JWT secret dari environment variable
-
-// Fungsi untuk memvalidasi apakah nomor telepon hanya berisi angka
+// Validate if the phone number contains only numeric characters
 func isValidPhoneNumber(phone string) bool {
 	regex := regexp.MustCompile(`^\+?[0-9]+$`)
 	return regex.MatchString(phone)
@@ -27,25 +23,14 @@ func hashPassword(password string) (string, error) {
 	return string(bytes), err
 }
 
-// Verifikasi password
+// Verify password
 func checkPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
 }
 
-// Buat token JWT
-func generateToken(userID uint) (string, error) {
-	claims := jwt.MapClaims{
-		"user_id": userID,
-		"exp":     time.Now().Add(time.Hour * 72).Unix(), // Token berlaku selama 72 jam
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(jwtSecret)
-	return tokenString, err
-}
-
-// Signup user baru
-func Signup(c *gin.Context) {
+// Register a new user
+func Register(c *gin.Context) {
 	var input struct {
 		Name        string `json:"name"`
 		Email       string `json:"email"`
@@ -58,7 +43,13 @@ func Signup(c *gin.Context) {
 		return
 	}
 
-	// Validasi phone number
+	// Check if required fields are not empty
+	if input.Name == "" || input.Email == "" || input.Password == "" || input.PhoneNumber == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "All fields are required"})
+		return
+	}
+
+	// Validate phone number
 	if !isValidPhoneNumber(input.PhoneNumber) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Phone number must contain only numeric characters"})
 		return
@@ -87,14 +78,7 @@ func Signup(c *gin.Context) {
 		return
 	}
 
-	// Generate JWT token
-	token, err := generateToken(user.ID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"token": token})
+	c.JSON(http.StatusOK, gin.H{"message": "User registered successfully"})
 }
 
 // Login user
@@ -106,6 +90,12 @@ func Login(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Check if required fields are not empty
+	if input.Email == "" || input.Password == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Email and Password are required"})
 		return
 	}
 
@@ -121,14 +111,7 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	// Generate JWT token
-	token, err := generateToken(user.ID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"token": token})
+	c.JSON(http.StatusOK, gin.H{"message": "Login successful"})
 }
 
 // Get all users
@@ -178,13 +161,19 @@ func UpdateUser(c *gin.Context) {
 		return
 	}
 
-	// Validasi phone number
+	// Check if required fields are not empty
+	if input.Name == "" || input.Email == "" || input.PhoneNumber == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Name, Email, and Phone Number are required"})
+		return
+	}
+
+	// Validate phone number
 	if !isValidPhoneNumber(input.PhoneNumber) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Phone number must contain only numeric characters"})
 		return
 	}
 
-	// Parse the date from string to time.Time without time zone
+	// Parse the date from string to time.Time without timezone
 	dob, err := time.Parse("2006-01-02", input.DateOfBirth)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid date format. Use YYYY-MM-DD."})
@@ -228,7 +217,7 @@ func DeleteUser(c *gin.Context) {
 	}
 
 	if err := config.DB.Delete(&user).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user"})
 		return
 	}
 

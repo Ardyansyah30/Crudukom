@@ -9,31 +9,28 @@ import (
 func SetupRoutes() *gin.Engine {
 	r := gin.Default()
 
-	// User routes
+	// User routes			//ryan
 	r.GET("/users", controllers.GetUsers)
 	r.GET("/users/:id", controllers.GetUserByID)
 	r.PUT("/users/:id", controllers.UpdateUser)
 	r.DELETE("/users/:id", controllers.DeleteUser)
-	r.POST("/signup", controllers.Signup)
+	r.POST("/register", controllers.Register)
 	r.POST("/login", controllers.Login)
 
-	// Question routes
-	r.POST("/", controllers.CreateQuestion)
-	r.GET("/", controllers.GetQuestions)
-	r.GET("/:id", controllers.GetQuestionByID)
-	r.PUT("/:id", controllers.UpdateQuestion)
-	r.DELETE("/:id", controllers.DeleteQuestion)
-	r.GET("/package/:id_package", controllers.GetQuestionsByPackageID)
+	// Question routes		//ryan
+	r.POST("/questions", controllers.CreateQuestion)
+	r.GET("/questions", controllers.GetQuestions)
+	r.GET("/questions/:id", controllers.GetQuestionByID)
+	r.PUT("/questions/:id", controllers.UpdateQuestion)
+	r.DELETE("/questions/:id", controllers.DeleteQuestion)
 
-	// Scoring route
-	r.POST("/score", controllers.CalculateScore) // Calculate user score
-
-	// Packet routes
+	// Packet routes		//ryan
+	// Route untuk paket
 	r.GET("/packets", controllers.GetPackets)
-	r.GET("/packets/:id", controllers.GetPacketByID)
+	r.GET("/packets/:packet_id", controllers.GetPacketByID)
 	r.POST("/packets", controllers.CreatePacket)
-	r.PUT("/packets/:id", controllers.UpdatePacket)
-	r.DELETE("/packets/:id", controllers.DeletePacket)
+	r.PUT("/packets/:packet_id", controllers.UpdatePacket)
+	r.DELETE("/packets/:packet_id", controllers.DeletePacket)
 
 	// Exam Routes
 	r.POST("/exams", controllers.CreateExam)

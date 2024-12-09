@@ -5,6 +5,7 @@ import (
 	"crud-ukom/models"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -25,6 +26,9 @@ func CreateQuestion(c *gin.Context) {
 		return
 	}
 
+	// Format answer to have newline between options
+	formattedAnswer := strings.ReplaceAll(input.Answer, ", ", "\n")
+
 	// Check if the answer is correct
 	isCorrect := 0
 	if input.Answer == input.CorrectAnswer {
@@ -34,7 +38,7 @@ func CreateQuestion(c *gin.Context) {
 	question := models.Question{
 		IDPackage:     input.IDPackage,
 		Question:      input.Question,
-		Answer:        input.Answer,
+		Answer:        formattedAnswer,
 		CorrectAnswer: input.CorrectAnswer,
 		PacketID:      input.PacketID,
 		IsCorrect:     isCorrect,
@@ -50,11 +54,33 @@ func CreateQuestion(c *gin.Context) {
 	c.JSON(http.StatusOK, question)
 }
 
+// 	var questions []models.Question
+// 	config.DB.Find(&questions)
+// 	c.JSON(http.StatusOK, questions)
+// }
+
 // Get all questions
 func GetQuestions(c *gin.Context) {
 	var questions []models.Question
-	config.DB.Find(&questions)
-	c.JSON(http.StatusOK, questions)
+	if err := config.DB.Find(&questions).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Periksa jika tidak ada data
+	if len(questions) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "No questions found"})
+		return
+	}
+
+	// Konversi setiap pertanyaan menggunakan ToResponse
+	var responses []models.QuestionResponse
+	for _, question := range questions {
+		responses = append(responses, question.ToResponse())
+	}
+
+	// Gunakan ToResponse untuk memformat data
+	c.JSON(http.StatusOK, responses)
 }
 
 // Get questions by package ID
@@ -87,7 +113,7 @@ func GetQuestionByID(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Question not found"})
 		return
 	}
-	c.JSON(http.StatusOK, question)
+	c.JSON(http.StatusOK, question.ToResponse())
 }
 
 // Update a question by ID
@@ -111,6 +137,9 @@ func UpdateQuestion(c *gin.Context) {
 		return
 	}
 
+	// Format answer to have newline between options
+	formattedAnswer := strings.ReplaceAll(input.Answer, ", ", "\n")
+
 	// Check if the answer is correct
 	isCorrect := 0
 	if input.Answer == input.CorrectAnswer {
@@ -120,7 +149,7 @@ func UpdateQuestion(c *gin.Context) {
 	// Update fields
 	question.IDPackage = input.IDPackage
 	question.Question = input.Question
-	question.Answer = input.Answer
+	question.Answer = formattedAnswer
 	question.CorrectAnswer = input.CorrectAnswer
 	question.PacketID = input.PacketID
 	question.IsCorrect = isCorrect
@@ -156,7 +185,7 @@ func CalculateScore(c *gin.Context) {
 		return
 	}
 
-	correctAnswers := 0
+	correctAnswers := 1
 	incorrectAnswers := 0
 	totalQuestions := len(input.Answers)
 
@@ -165,8 +194,10 @@ func CalculateScore(c *gin.Context) {
 		if err := config.DB.Where("id = ?", userAnswer.QuestionID).First(&question).Error; err == nil {
 			if question.CorrectAnswer == userAnswer.Answer {
 				correctAnswers++
+				question.IsCorrect = 1
 			} else {
 				incorrectAnswers++
+				question.IsCorrect = 0
 			}
 		}
 	}

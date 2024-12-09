@@ -17,12 +17,20 @@ func CreateExam(c *gin.Context) {
 		return
 	}
 
+	// Simpan data ke database
 	if err := config.DB.Create(&exam).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, exam)
+	// Hitung durasi ujian
+	duration := GetExamDuration(exam.StartTime, exam.EndTime)
+
+	// Kirim respons bersama dengan durasi
+	c.JSON(http.StatusOK, gin.H{
+		"exam":     exam,
+		"duration": duration.Minutes(), // durasi dalam menit
+	})
 }
 
 // Get all exams
@@ -59,10 +67,12 @@ func UpdateExam(c *gin.Context) {
 		return
 	}
 
+	// Update field exam dengan input baru
 	exam.IDPacket = input.IDPacket
 	exam.IDUser = input.IDUser
 	exam.NameExam = input.NameExam
-	exam.Duration = input.Duration
+	exam.StartTime = input.StartTime
+	exam.EndTime = input.EndTime
 	exam.PaymentStatus = input.PaymentStatus
 	exam.Score = input.Score
 	exam.UpdatedAt = time.Now()
@@ -78,4 +88,9 @@ func DeleteExam(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Exam deleted successfully"})
+}
+
+// Fungsi untuk menghitung durasi ujian
+func GetExamDuration(startTime, endTime time.Time) time.Duration {
+	return endTime.Sub(startTime)
 }
